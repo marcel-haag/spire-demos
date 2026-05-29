@@ -1,0 +1,6 @@
+# kind-amd64.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  image: kindest/node:v1.27.3@sha256:3a94fbae79e9c6d635e382cf7b0e7a1e23b36d146a06502c6a3f3a0ac6d1a1a7
