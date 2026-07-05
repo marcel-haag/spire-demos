@@ -1,0 +1,42 @@
+# Declarative replacement for create-registration-entries.sh in the stateful demo.
+#
+# Each workload runs in the same namespace with the same (default) service
+# account, so a per-app SPIFFE ID needs the app's pod-label baked into the
+# template. workloadSelectorTemplates scopes the identity down to the Envoy
+# sidecar container specifically, mirroring the original
+# `-selector k8s:container-name:envoy` registration entries.
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: backend
+spec:
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}/backend"
+  podSelector:
+    matchLabels:
+      app: backend
+  workloadSelectorTemplates:
+    - "k8s:container-name:envoy"
+---
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: frontend
+spec:
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}/frontend"
+  podSelector:
+    matchLabels:
+      app: frontend
+  workloadSelectorTemplates:
+    - "k8s:container-name:envoy"
+---
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: frontend-2
+spec:
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}/frontend-2"
+  podSelector:
+    matchLabels:
+      app: frontend-2
+  workloadSelectorTemplates:
+    - "k8s:container-name:envoy"

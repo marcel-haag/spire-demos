@@ -41,11 +41,14 @@ The components that hold state and form the trust foundation:
 - **OPA sidecar** — external authorization for Envoy
 - **Demo app** without persistent data
 
-### Stateless part (roadmap)
-Moving registration and installation toward a declarative, Kubernetes-native model:
+### Stateless part
+The same scenario, installed and registered declaratively instead of by hand:
 
-- **Operator** — SPIRE Controller Manager
-- **Helm charts** — standardized, hardened installs
+- **Operator** — [spire-controller-manager](https://github.com/spiffe/spire-controller-manager),
+  reconciling `ClusterSPIFFEID` custom resources into SPIRE registration entries
+- **Helm charts** — [helm-charts-hardened](https://github.com/spiffe/helm-charts-hardened)'s
+  `spiffe/spire` chart, installing server, agent, SPIFFE CSI driver, and the
+  controller manager as one release
 
 ---
 
@@ -57,7 +60,7 @@ Moving registration and installation toward a declarative, Kubernetes-native mod
 | **1** | Kubernetes + SPIRE fundamentals | ✅ |
 | **2** | X.509-SVID + Envoy + mTLS | ✅ |
 | **3** | OPA authorization | ✅ |
-| **+**  | Stateless improvements (Operator, Helm) | 🚧 planned |
+| **+**  | Stateless: Operator + Helm re-implementation of phases 0–3 | ✅ |
 
 ### Phase 0 — Quickstart Kubernetes
 Get SPIRE running and prove a workload can fetch its identity.
@@ -68,7 +71,7 @@ Get SPIRE running and prove a workload can fetch its identity.
 
 Reference: <https://spiffe.io/docs/latest/try/getting-started-k8s/>
 
-➡️ Full step-by-step guide: **[STATEFULREADME.md](./STATEFULREADME.md)**
+➡️ Full step-by-step guide: **[STATEFULREADME.md](./stateful/STATEFULREADME.md)**
 
 ### Phase 1 — Kubernetes + SPIRE Fundamentals
 Understand *how* identity is established and *why* a given pod gets a given identity.
@@ -93,6 +96,14 @@ Layer policy-based authorization on top of authenticated identity.
 - Policies based on **SPIFFE ID**, HTTP method, and path
 - Clear separation of **authentication** (who are you?) and **authorization**
   (what may you do?)
+
+### Phase + — Stateless: Operator + Helm
+Re-implements phases 0–3 declaratively: SPIRE installed via the
+`spiffe/spire` Helm chart, workloads registered with `ClusterSPIFFEID` custom
+resources reconciled by the spire-controller-manager operator instead of
+hand-written manifests and `spire-server entry create` scripts.
+
+➡️ Full step-by-step guide: **[STATELESSREADME.md](./stateless/STATELESSREADME.md)**
 
 ---
 

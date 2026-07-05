@@ -1,0 +1,33 @@
+# Values for the "spiffe/spire" umbrella chart (helm-charts-hardened).
+#
+# This replaces the manual quickstart manifests from the stateful demo
+# (spire-namespace.yaml, server-*.yaml, agent-*.yaml) with a single Helm
+# release. Registration entries are no longer created by hand with
+# `spire-server entry create` — instead the spire-controller-manager
+# (bundled in this chart) reconciles ClusterSPIFFEID custom resources into
+# SPIRE registration entries automatically.
+global:
+  spire:
+    trustDomain: example.org
+    clusterName: demo-cluster
+
+spire-server:
+  controllerManager:
+    enabled: true
+    # Let the controller manager reconcile ClusterSPIFFEID/ClusterFederatedTrustDomain
+    # resources that don't set spec.className (the demo manifests in envoy-x509/
+    # envoy-opa are plain CRs applied with kubectl, not templated with the
+    # release-specific className).
+    watchClassless: true
+    identities:
+      clusterSPIFFEIDs:
+        # Disable the chart's blanket "every pod gets ns/sa identity" default.
+        # The envoy-x509/envoy-opa demos need distinct identities per app even
+        # though all workloads share the same namespace/service account, so
+        # each demo phase declares its own ClusterSPIFFEID resources instead.
+        default:
+          enabled: false
+
+# Not used by this demo.
+spiffe-oidc-discovery-provider:
+  enabled: false
