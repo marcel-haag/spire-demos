@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-2
+  labels:
+    app: frontend-2
+spec:
+  selector:
+    matchLabels:
+      app: frontend-2
+  template:
+    metadata:
+      labels:
+        app: frontend-2
+    spec:
+      containers:
+      - name: envoy
+        image: envoyproxy/envoy:v1.25.1
+        imagePullPolicy: Always
+        args: ["-l", "debug", "--local-address-ip-version", "v4", "-c", "/run/envoy/envoy.yaml", "--base-id", "2"]
+        volumeMounts:
+        - name: envoy-config
+          mountPath: "/run/envoy"
+          readOnly: true 
+        - name: spire-agent-socket
+          mountPath: /run/spire/agent-sockets
+          readOnly: true          
+      - name: frontend-2
+        imagePullPolicy: IfNotPresent
+        image: docker.io/newzyer/symbank-webapp:latest
+        command: ["/opt/symbank-webapp/symbank-webapp", "-config", "/run/symbank-webapp/config/symbank-webapp-2.conf"]
+        ports:
+        - containerPort: 3002
+        volumeMounts:
+        - name: symbank-webapp-2-config
+          mountPath: /run/symbank-webapp/config
+      volumes:
+      - name: envoy-config
+        configMap:
+          name: frontend-2-envoy
+      - name: spire-agent-socket
+        csi:
+          driver: "csi.spiffe.io"
+          readOnly: true
+      - name: symbank-webapp-2-config
+        configMap:
+          name: symbank-webapp-2-config
