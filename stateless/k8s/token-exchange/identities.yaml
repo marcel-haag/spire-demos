@@ -1,0 +1,26 @@
+# frontend/frontend-2 identities are already registered by envoy-x509/identities.yaml
+# and are reused unchanged here (the login-exchange Jobs carry the same pod labels,
+# so SPIRE issues them the same SPIFFE ID as the real frontend workloads).
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: sts
+spec:
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}/sts"
+  podSelector:
+    matchLabels:
+      app: sts
+  workloadSelectorTemplates:
+    - "k8s:container-name:envoy"
+---
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: resource-server
+spec:
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}/resource-server"
+  podSelector:
+    matchLabels:
+      app: resource-server
+  workloadSelectorTemplates:
+    - "k8s:container-name:envoy"

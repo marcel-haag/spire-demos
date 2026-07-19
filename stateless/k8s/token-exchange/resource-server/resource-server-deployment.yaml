@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-server
+  labels:
+    app: resource-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resource-server
+  template:
+    metadata:
+      labels:
+        app: resource-server
+    spec:
+      containers:
+      - name: envoy
+        image: envoyproxy/envoy:v1.25.1
+        imagePullPolicy: Always
+        args: ["-l", "debug", "--local-address-ip-version", "v4", "-c", "/run/envoy/envoy.yaml"]
+        ports:
+        - containerPort: 9002
+        volumeMounts:
+        - name: envoy-config
+          mountPath: "/run/envoy"
+          readOnly: true
+        - name: spire-agent-socket
+          mountPath: /run/spire/agent-sockets
+          readOnly: true
+      - name: resource-server
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: nginx.conf
+          readOnly: true
+      volumes:
+      - name: envoy-config
+        configMap:
+          name: resource-server-envoy
+      - name: nginx-config
+        configMap:
+          name: resource-server-nginx-config
+      - name: spire-agent-socket
+        csi:
+          driver: "csi.spiffe.io"
+          readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: resource-server
+spec:
+  clusterIP: None
+  ports:
+  - port: 9002
+    protocol: TCP
+    targetPort: 9002
+  selector:
+    app: resource-server

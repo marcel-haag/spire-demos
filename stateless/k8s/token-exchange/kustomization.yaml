@@ -1,0 +1,32 @@
+configMapGenerator:
+- name: sts-realm-export
+  files:
+    - keycloak/realm-export.json
+- name: sts-envoy
+  files:
+    - keycloak/envoy-config/envoy.yaml
+- name: resource-server-envoy
+  files:
+    - resource-server/envoy-config/envoy.yaml
+- name: resource-server-nginx-config
+  files:
+    - resource-server/nginx.conf
+- name: jacob-envoy
+  files:
+    - envoy.yaml=jobs/envoy-config/jacob-envoy.yaml
+- name: alex-envoy
+  files:
+    - envoy.yaml=jobs/envoy-config/alex-envoy.yaml
+- name: login-exchange-script
+  files:
+    - jobs/login-exchange.sh
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+  - keycloak/keycloak-deployment.yaml
+  - resource-server/resource-server-deployment.yaml
+# jacob/alex-login-exchange Jobs are intentionally NOT included here — they must
+# only be applied once the sts/resource-server Deployments are ready (see
+# scripts/set-env.sh), otherwise they race Keycloak's boot and burn through
+# their backoffLimit before it comes up.

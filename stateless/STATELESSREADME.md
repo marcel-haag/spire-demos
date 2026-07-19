@@ -146,6 +146,26 @@ Envoy/OPA configuration.
 bash envoy-opa/scripts/set-env.sh
 ```
 
+## Phase + — OAuth 2.0 Token Exchange / On-Behalf-Of
+
+Directory: [`token-exchange/`](k8s/token-exchange) — full tutorial: [token-exchange/README.md](k8s/token-exchange/README.md)
+
+Adds a Keycloak-based Authorization Server / STS on top of Phase 2's
+`frontend`/`frontend-2` identities, demonstrating
+[RFC 8693 Token Exchange](https://datatracker.ietf.org/doc/html/rfc8693):
+when a workload acts on behalf of a human (Jacob Marley / Alex Fergus), the
+exchanged access token keeps the human's `sub` and records the acting
+workload's SPIFFE ID in an `act` claim. The workload authenticates to the
+STS the same way `backend` authenticates callers in Phase 2 — Envoy SDS
+mTLS with a SAN allow-list — and a small resource server validates the
+result via Envoy's `jwt_authn` filter against Keycloak's JWKS. Needs more
+memory headroom than the earlier phases (Keycloak's JVM) — see the phase
+README's prerequisites.
+
+```bash
+bash token-exchange/scripts/set-env.sh
+```
+
 ---
 
 ## Cleanup
@@ -153,7 +173,7 @@ bash envoy-opa/scripts/set-env.sh
 Each phase's `clean-env.sh` also tears down the phases underneath it:
 
 ```bash
-bash envoy-opa/scripts/clean-env.sh    # tears down envoy-opa + envoy-x509 + SPIRE
+bash token-exchange/scripts/clean-env.sh    # tears down token-exchange + envoy-x509 + SPIRE
 ```
 
 ---
@@ -185,4 +205,6 @@ kubectl logs -n spire -l app=spire-agent
 - [ClusterSPIFFEID CRD reference](https://github.com/spiffe/spire-controller-manager/blob/main/docs/clusterspiffeid-crd.md)
 - [helm-charts-hardened](https://github.com/spiffe/helm-charts-hardened)
 - [spire chart reference](https://github.com/spiffe/helm-charts-hardened/tree/main/charts/spire)
+- [RFC 8693 — OAuth 2.0 Token Exchange](https://datatracker.ietf.org/doc/html/rfc8693)
+- [Keycloak: Configuring and using token exchange](https://www.keycloak.org/securing-apps/token-exchange)
 - [stateful demo (manual manifests, for comparison)](../stateful/STATEFULREADME.md)

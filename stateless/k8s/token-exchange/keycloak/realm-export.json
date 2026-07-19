@@ -1,0 +1,88 @@
+{
+  "realm": "obo-demo",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "users": [
+    {
+      "username": "jacob.marley",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Jacob",
+      "lastName": "Marley",
+      "email": "jacob.marley@example.org",
+      "credentials": [
+        { "type": "password", "value": "jacob-demo-pw", "temporary": false }
+      ]
+    },
+    {
+      "username": "alex.fergus",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Alex",
+      "lastName": "Fergus",
+      "email": "alex.fergus@example.org",
+      "credentials": [
+        { "type": "password", "value": "alex-demo-pw", "temporary": false }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "frontend",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "frontend-demo-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "standard.token.exchange.enabled": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "act-sub",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "act.sub",
+            "claim.value": "spiffe://example.org/ns/default/sa/default/frontend",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "frontend-2",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "frontend-2-demo-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "standard.token.exchange.enabled": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "act-sub",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "act.sub",
+            "claim.value": "spiffe://example.org/ns/default/sa/default/frontend-2",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ]
+}

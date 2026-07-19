@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sts
+  labels:
+    app: sts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sts
+  template:
+    metadata:
+      labels:
+        app: sts
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:26.4
+        args: ["start-dev", "--import-realm"]
+        env:
+        - name: KC_BOOTSTRAP_ADMIN_USERNAME
+          value: "admin"
+        - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+          value: "admin-demo-pw"
+        - name: KC_HOSTNAME
+          value: "https://sts:8443"
+        - name: KC_HTTP_ENABLED
+          value: "true"
+        # Small kind cluster, tight memory budget shared with SPIRE/Envoy — keep
+        # Keycloak's JVM heap tightly capped instead of the ~512Mi+ default.
+        - name: JAVA_OPTS_APPEND
+          value: "-Xms64m -Xmx320m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m"
+        resources:
+          requests:
+            memory: "500Mi"
+          limits:
+            memory: "1Gi"
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          failureThreshold: 24
+        volumeMounts:
+        - name: realm-import
+          mountPath: /opt/keycloak/data/import
+          readOnly: true
+      - name: envoy
+        image: envoyproxy/envoy:v1.25.1
+        imagePullPolicy: Always
+        args: ["-l", "debug", "--local-address-ip-version", "v4", "-c", "/run/envoy/envoy.yaml"]
+        ports:
+        - containerPort: 8443
+        volumeMounts:
+        - name: envoy-config
+          mountPath: "/run/envoy"
+          readOnly: true
+        - name: spire-agent-socket
+          mountPath: /run/spire/agent-sockets
+          readOnly: true
+      volumes:
+      - name: realm-import
+        configMap:
+          name: sts-realm-export
+      - name: envoy-config
+        configMap:
+          name: sts-envoy
+      - name: spire-agent-socket
+        csi:
+          driver: "csi.spiffe.io"
+          readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sts
+spec:
+  clusterIP: None
+  ports:
+  - port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app: sts

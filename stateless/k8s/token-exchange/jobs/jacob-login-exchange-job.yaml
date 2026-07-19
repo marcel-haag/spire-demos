@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jacob-login-exchange
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: frontend
+        job-name: jacob-login-exchange
+    spec:
+      restartPolicy: Never
+      # Native sidecar (restartPolicy: Always init container, stable since k8s 1.29):
+      # Envoy keeps running alongside the main container, but kubelet stops it
+      # automatically once the main container exits, so the Job can complete.
+      initContainers:
+      - name: envoy
+        image: envoyproxy/envoy:v1.25.1
+        imagePullPolicy: Always
+        restartPolicy: Always
+        args: ["-l", "debug", "--local-address-ip-version", "v4", "-c", "/run/envoy/envoy.yaml"]
+        volumeMounts:
+        - name: envoy-config
+          mountPath: "/run/envoy"
+          readOnly: true
+        - name: spire-agent-socket
+          mountPath: /run/spire/agent-sockets
+          readOnly: true
+      containers:
+      - name: login-exchange
+        image: badouralix/curl-jq:latest
+        command: ["/bin/sh", "/scripts/login-exchange.sh"]
+        env:
+        - name: HUMAN_USERNAME
+          value: "jacob.marley"
+        - name: HUMAN_PASSWORD
+          value: "jacob-demo-pw"
+        - name: CLIENT_ID
+          value: "frontend"
+        - name: CLIENT_SECRET
+          value: "frontend-demo-secret"
+        - name: EXPECTED_ACTOR_SPIFFE_ID
+          value: "spiffe://example.org/ns/default/sa/default/frontend"
+        volumeMounts:
+        - name: script
+          mountPath: /scripts
+          readOnly: true
+      volumes:
+      - name: script
+        configMap:
+          name: login-exchange-script
+          defaultMode: 0755
+      - name: envoy-config
+        configMap:
+          name: jacob-envoy
+      - name: spire-agent-socket
+        csi:
+          driver: "csi.spiffe.io"
+          readOnly: true

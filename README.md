@@ -49,6 +49,9 @@ The same scenario, installed and registered declaratively instead of by hand:
 - **Helm charts** — [helm-charts-hardened](https://github.com/spiffe/helm-charts-hardened)'s
   `spiffe/spire` chart, installing server, agent, SPIFFE CSI driver, and the
   controller manager as one release
+- **OAuth 2.0 Token Exchange** — a Keycloak-based STS on top of the stateless
+  workload identities, preserving a human `sub` and recording the acting
+  workload in an `act` claim (RFC 8693)
 
 ---
 
@@ -61,6 +64,7 @@ The same scenario, installed and registered declaratively instead of by hand:
 | **2** | X.509-SVID + Envoy + mTLS | ✅ |
 | **3** | OPA authorization | ✅ |
 | **+**  | Stateless: Operator + Helm re-implementation of phases 0–3 | ✅ |
+| **+**  | Stateless: OAuth 2.0 Token Exchange / On-Behalf-Of (RFC 8693) | ✅ |
 
 ### Phase 0 — Quickstart Kubernetes
 Get SPIRE running and prove a workload can fetch its identity.
@@ -104,6 +108,19 @@ resources reconciled by the spire-controller-manager operator instead of
 hand-written manifests and `spire-server entry create` scripts.
 
 ➡️ Full step-by-step guide: **[STATELESSREADME.md](./stateless/STATELESSREADME.md)**
+
+### Phase + — Stateless: OAuth 2.0 Token Exchange / On-Behalf-Of
+Layers a Keycloak Authorization Server / STS on top of the stateless
+`frontend`/`frontend-2` identities to demonstrate
+[RFC 8693 Token Exchange](https://datatracker.ietf.org/doc/html/rfc8693):
+- A workload authenticates to the STS the same way `backend` authenticates
+  callers in Phase 2 — Envoy SDS mTLS with a SAN allow-list
+- Exchanging a human's token keeps their `sub` and adds an `act` claim
+  recording the acting workload's SPIFFE ID
+- A small resource server validates the result via Envoy's `jwt_authn`
+  filter against Keycloak's JWKS — no custom application code
+
+➡️ Full step-by-step guide: **[token-exchange/README.md](./stateless/k8s/token-exchange/README.md)**
 
 ---
 
