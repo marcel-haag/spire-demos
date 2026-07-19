@@ -13,6 +13,13 @@ allow if {
     svc_spiffe_id == "spiffe://example.org/ns/default/sa/default/frontend"
 }
 
+# allow Frontend-2 service to access Backend service
+allow if {
+    valid_path
+    http_request.method == "GET"
+    svc_spiffe_id == "spiffe://example.org/ns/default/sa/default/frontend-2"
+}
+
 svc_spiffe_id := spiffe_id if {
     [_, _, uri_type_san] := split(http_request.headers["x-forwarded-client-cert"], ";")
     [_, spiffe_id] := split(uri_type_san, "=")
